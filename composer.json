@@ -1,0 +1,20 @@
+{
+    "name": "krak/crypto",
+    "description": "Cryptographic Library",
+    "type": "library",
+    "authors": [
+        {
+            "name": "RJ Garcia",
+            "email": "rj@bighead.net"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Krak\\Crypto\\": "src"
+        }
+    },
+    "require": {},
+    "require-dev": {
+        "peridot-php/peridot": "^1.18"
+    }
+}
