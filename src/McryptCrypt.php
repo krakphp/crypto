@@ -9,10 +9,10 @@ class McryptCrypt implements Crypt
     private $mode;
     private $pad;
 
-    private $ivsize;
+    private $ivgen;
     private $blocksize;
 
-    public function __construct($key, Pad $pad = null, $cipher = MCRYPT_RIJNDAEL_128, $mode =  MCRYPT_MODE_CBC) {
+    public function __construct($key, Pad $pad = null, $ivgen = null, $cipher = MCRYPT_RIJNDAEL_128, $mode = MCRYPT_MODE_CBC) {
         $this->key = $key;
         $this->cipher = $cipher;
         $this->mode = $mode;
@@ -20,10 +20,11 @@ class McryptCrypt implements Crypt
         $this->ivsize = mcrypt_get_iv_size($cipher, $mode);
         $this->blocksize = mcrypt_get_block_size($cipher, $mode);
         $this->pad = $pad ?: new Pkcs7Pad();
+        $this->ivgen = $ivgen ?: mcrypt_iv_gen();
     }
 
     public function encrypt($data) {
-        $iv = mcrypt_create_iv($this->ivsize);
+        $iv = call_user_func($this->ivgen, $this->ivsize);
 
         $encrypted = mcrypt_encrypt(
             $this->cipher,
@@ -32,9 +33,8 @@ class McryptCrypt implements Crypt
             $this->mode,
             $iv
         );
-        $encrypted = $iv . $encrypted;
 
-        return base64_encode($encrypted);
+        return pack_payload($iv, $encrypted);
     }
 
     public function decrypt($data) {

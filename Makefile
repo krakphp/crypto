@@ -6,4 +6,4 @@ composer:
 	composer update
 
 test:
-	$(PERIDOT) test/*.php
+	$(PERIDOT) --grep='test/*.php'

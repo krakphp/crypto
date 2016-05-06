@@ -6,7 +6,7 @@ namespace Krak\Crypto;
 class Pkcs7Pad implements Pad
 {
     public function pad($val, $blocksize) {
-    $padlen = $blocksize - strlen($val) % $blocksize;
+        $padlen = $blocksize - strlen($val) % $blocksize;
         return $val . str_repeat(chr($padlen), $padlen);
     }
 
