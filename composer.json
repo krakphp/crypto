@@ -15,10 +15,10 @@
         "files": ["src/crypto.php"]
     },
     "require": {
+        "nikic/iter": "^1.3",
         "paragonie/random_compat": "^2.0"
     },
     "require-dev": {
-        "mikey179/vfsStream": "^1.6",
         "peridot-php/peridot": "^1.18"
     }
 }

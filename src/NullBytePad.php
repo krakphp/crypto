@@ -3,7 +3,9 @@
 namespace Krak\Crypto;
 
 /** NullByte padding implementation
-    simply appends null bytes to meet the blocksize */
+
+    Simply appends null bytes to meet the blocksize
+*/
 class NullBytePad implements Pad
 {
     public function pad($val, $blocksize) {

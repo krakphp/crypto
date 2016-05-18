@@ -38,10 +38,9 @@ class McryptCrypt implements Crypt
     }
 
     public function decrypt($data) {
-        $data = base64_decode($data);
-
         $iv = substr($data, 0, $this->ivsize);
         $data = substr($data, $this->ivsize);
+
         $unencrypted = mcrypt_decrypt(
             $this->cipher,
             $this->key,

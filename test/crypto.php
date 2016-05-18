@@ -54,38 +54,7 @@ describe('Crypto', function() {
     $key = random_bytes(16);
     $test_crypt(new Crypto\McryptCrypt($key, new Crypto\NoPad()), 'McryptCrypt');
     $test_crypt(new Crypto\OpenSSLCrypt($key), 'OpenSSLCrypt');
-
-    describe('McryptStreamCrypt', function() {
-        beforeEach(function() {
-            $this->root = vfsStream::setup();
-        });
-
-        it('it can encrypt and decrypt a file', function() {
-            $path = $this->root->url() . '/enc';
-            $src = fopen('php://memory', 'w');
-            $dst = fopen($path, 'w');
-            $val = str_repeat('a', 15);
-            fwrite($src, $val);
-            rewind($src);
-
-            $key = str_repeat('c', 16);
-            $crypt = new Crypto\McryptStreamCrypt($key, new Crypto\Pkcs7Pad());
-            $crypt->streamEncrypt($src, $dst);
-
-            fclose($src);
-            fclose($dst);
-
-            $src = fopen($path, 'r');
-            $dst = fopen('php://memory', 'w');
-            $crypt->streamDecrypt($src, $dst);
-
-            rewind($dst);
-            $contents = stream_get_contents($dst);
-
-            fclose($src);
-            fclose($dst);
-
-            assert($contents == $val);
-        });
-    });
+    $test_crypt(new Crypto\NullCrypt(), 'NullCrypt');
+    $test_crypt(new Crypto\Base64Crypt(new Crypto\NullCrypt()), 'Base64Crypt');
+    $test_crypt(new Crypto\HmacCrypt(new Crypto\NullCrypt(), $key), 'HmacCrypt');
 });
