@@ -12,10 +12,10 @@ describe('Stream', function() {
     describe('#read_stream', function() {
         it('takes a php stream and turns into a stream of chunks', function() {
             $stream = fopen('php://memory', 'rw');
-            fwrite($stream, 'abcd');
+            fwrite($stream, 'ab0cd');
             rewind($stream);
 
-            assert('abcd' == Crypto\stream_to_str(Crypto\read_stream($stream, 1)));
+            assert('ab0cd' == Crypto\stream_to_str(Crypto\read_stream($stream, 1)));
         });
     });
     describe('#str_stream', function() {
@@ -33,6 +33,16 @@ describe('Stream', function() {
             $stream = Crypto\str_stream('abcd');
             $map = Crypto\map_stream('strtoupper');
             assert('ABCD' == Crypto\stream_to_str($map($stream)));
+        });
+    });
+    describe('#pipe_stream', function() {
+        it('pipes streams into one another', function() {
+            $stream = Crypto\str_stream('12ab34CD', 1);
+            $pipe = Crypto\pipe_stream([
+                Crypto\filter_stream('ctype_alpha'),
+                Crypto\filter_stream('ctype_upper')
+            ]);
+            assert('CD' == Crypto\stream_to_str($pipe($stream)));
         });
     });
     describe('Pipe', function() {

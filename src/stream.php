@@ -18,8 +18,12 @@ use iter;
     @return \Generator yields chunks of $chunksize until stream is empty
 */
 function read_stream($stream, $chunksize) {
-    while (!feof($stream) && ($contents = fread($stream, $chunksize))) {
-        yield $contents;
+    while (!feof($stream)) {
+        $contents = fread($stream, $chunksize);
+
+        if (strlen($contents)) {
+            yield $contents;
+        }
     }
 }
 
@@ -89,6 +93,25 @@ function map_stream($predicate) {
 function filter_stream($predicate) {
     return function($chunks) use ($predicate) {
         return iter\filter($predicate, $chunks);
+    };
+}
+
+/** Pipes streams from one to the next
+
+    ```php
+    $stream = str_stream('12ab34CD', 1);
+    $pipe = pipe_stream([filter_stream('ctype_alpha'), filter_stream('ctype_upper')]);
+    assert('CD' == stream_to_str($pipe($stream)));
+    ```
+
+    @param array $streams an array of streams to pipe into one another
+    @return \Closure yields the chunks by piping them from one stream to the next
+*/
+function pipe_stream($streams) {
+    return function($chunks) use ($streams) {
+        return iter\reduce(function($acc, $stream) {
+            return $stream($acc);
+        }, $streams, $chunks);
     };
 }
 
@@ -208,7 +231,7 @@ function base64_encode_stream($size = 1024) {
 
     @see base64_encode_stream
     @param int $size
-    @return \Closure
+    @return \Closure a function that yields the decoded chunks
 */
 function base64_decode_stream($size = 1024) {
     return function($chunks) use ($size) {
