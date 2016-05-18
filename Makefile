@@ -1,5 +1,9 @@
 .PHONY: composer test
 
+ifndef dest
+    dest=docs/api
+endif
+
 PERIDOT = ./vendor/bin/peridot
 
 composer: composer.phar
@@ -9,7 +13,7 @@ test:
 	$(PERIDOT) --grep='test/*.php'
 
 api: apigen.phar
-	./apigen.phar generate --title 'Krak Crypto' -s src -d docs/api
+	./apigen.phar generate --title 'Krak Crypto' -s src -d $(dest)
 
 composer.phar:
 	php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
