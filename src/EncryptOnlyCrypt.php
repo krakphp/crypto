@@ -2,16 +2,16 @@
 
 namespace Krak\Crypto;
 
-class EncryptOnlyPGCrypt implements Crypt
+class EncryptOnlyCrypt implements Crypt
 {
-    private $gpg;
+    private $crypt;
 
-    public function __construct($gpg) {
-        $this->gpg = $gpg;
+    public function __construct(Crypt $crypt) {
+        $this->crypt = $crypt;
     }
 
     public function encrypt($data) {
-        return $this->gpg->encrypt($data);
+        return $this->crypt->encrypt($data);
     }
 
     public function decrypt($data) {

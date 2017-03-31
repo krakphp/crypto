@@ -36,7 +36,9 @@ class GnuPGCrypt implements Crypt
             return new self($gpg);
         }
         else{
-            return new EncryptOnlyPGCrypt($gpg);
+            return new EncryptOnlyCrypt(
+                new self($gpg)
+            );
         }
     }
 
