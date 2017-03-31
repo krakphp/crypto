@@ -59,6 +59,24 @@ The Crypt libraries are responsible for encrypting the data. There are crypt imp
 
 **Base64Crypt**, **HmacCrypt**, and are decorators for providing base64 encoding and hmac signing/authentication for your messages.
 
+**GnuPGCrypt** handles encrypting with GPG and expects a fully configured GPG instance. The `$keys_config` is an array with the public/private keys created with the static `createFromKeys()` function. eg:
+ 
+```
+$gpg_crypt = Krak\Crypto\GnuPGCrypt::createFromKeys(
+    [
+        'public' => [
+            'key' => file_get_contents('/tmp/gnupg/public.key')
+        ],
+        'private' => [
+            'key' => file_get_contents('/tmp/gnupg/private.key'),
+            'pass' => 'passphrase'
+        ],
+    ]
+);
+```
+
+**EncryptOnlyGnuPGCrypt** is a decorator for only encrypting (when private key was not supplied)
+
 **NullCrypt** is used more for testing or mocking. It just returns the data passed to it.
 
 ### Pad Types
