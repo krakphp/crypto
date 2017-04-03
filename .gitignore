@@ -3,3 +3,4 @@ composer.lock
 /docs/api
 /composer.phar
 /apigen.phar
+/playground.php

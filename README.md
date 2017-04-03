@@ -59,6 +59,18 @@ The Crypt libraries are responsible for encrypting the data. There are crypt imp
 
 **Base64Crypt**, **HmacCrypt**, and are decorators for providing base64 encoding and hmac signing/authentication for your messages.
 
+**GnuPGCliCrypt** handles encrypting via the `gpg` cli utility.
+
+```php
+<?php
+
+$crypt = new Krak\Crypt\GnuPGCliCrypt('User Name', $passphrase = 'secret', $gpg_executable_path = 'gpg');
+```
+
+It will encrypt/decrypt data with the public and private keys for the given `$username`. **Important:** you need to make sure the keys are properly imported into your gpg cli tool. We use the `--always-trust` flag for encrypting, so make sure the keys you add are properly trusted.
+
+This crypt also requires the `symfony/process` component to be installed.
+
 **NullCrypt** is used more for testing or mocking. It just returns the data passed to it.
 
 ### Pad Types
