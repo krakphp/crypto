@@ -125,5 +125,36 @@ describe('Stream', function() {
 
             assert($input == Crypto\stream_to_str($stream));
         });
+        it('decrypts from headers', function() {
+            $crypt = new Crypto\OpenSSLCrypt(random_bytes(16));
+
+            $input = str_repeat('a', 32);
+            $stream = new Crypto\StreamPipe(crypto\str_stream($input));
+            $stream = $stream->pipe(Crypto\encrypt_stream($crypt, 8, true))
+                ->pipe(Crypto\decrypt_stream($crypt, null));
+
+            assert($input == Crypto\stream_to_str($stream));
+        });
+    });
+    describe('#header_chunk_stream', function() {
+        it('properly chunks based off of headers', function() {
+            $chunks = Crypto\add_chunk_header_stream(['a', 'bb', 'ccc', 'dddd', 'eeeee']);
+            $str = Crypto\stream_to_str($chunks);
+            $chunk_stream = Crypto\chunk_stream(4);
+            $chunks = [$str];
+            $chunks = $chunk_stream($chunks);
+            $chunks = Crypto\header_chunk_stream($chunks);
+            $chunks = iterator_to_array($chunks);
+            assert(implode('', $chunks) === 'abbcccddddeeeee');
+        });
+        it('throws an exception if headers are invalid or not found.', function() {
+            $chunks = Crypto\header_chunk_stream(['a', 'b']);
+            try {
+                iterator_to_array($chunks);
+                assert(false);
+            } catch (RuntimeException $e) {
+                assert(true);
+            }
+        });
     });
 });

@@ -3,7 +3,7 @@
 use Krak\Crypto,
     org\bovigo\vfs\vfsStream;
 
-describe('Crypto', function() {
+describe('Krak Crypto', function() {
     describe('Pkcs7Pad', function() {
         describe('->pad', function() {
             it('pads a string', function() {
@@ -52,9 +52,14 @@ describe('Crypto', function() {
         });
     };
     $key = random_bytes(16);
-    $test_crypt(new Crypto\McryptCrypt($key, new Crypto\NoPad()), 'McryptCrypt');
+    if (extension_loaded('mcrypt')) {
+        $test_crypt(new Crypto\McryptCrypt($key, new Crypto\NoPad()), 'McryptCrypt', extension_loaded('mcrypt'));
+    }
     $test_crypt(new Crypto\OpenSSLCrypt($key), 'OpenSSLCrypt');
     $test_crypt(new Crypto\NullCrypt(), 'NullCrypt');
     $test_crypt(new Crypto\Base64Crypt(new Crypto\NullCrypt()), 'Base64Crypt');
     $test_crypt(new Crypto\HmacCrypt(new Crypto\NullCrypt(), $key), 'HmacCrypt');
+    describe('Stream', function() {
+        require_once __DIR__ . '/stream.php';
+    });
 });

@@ -10,7 +10,7 @@ composer: composer.phar
 	./composer.phar update
 
 test:
-	$(PERIDOT) --grep='test/*.php'
+	$(PERIDOT) test
 
 api: apigen.phar
 	./apigen.phar generate --title 'Krak Crypto' -s src -d $(dest)
