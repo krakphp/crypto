@@ -266,13 +266,26 @@ function base64_decode_stream($size = 1024) {
     @param int $chunk_size The size of the chunks to encrypt
     @return \Closure yields encrypted chunks
 */
-function encrypt_stream(Crypt $crypt, $chunk_size) {
-    return function($chunks) use ($crypt, $chunk_size) {
+function encrypt_stream(Crypt $crypt, $chunk_size, $header = false) {
+    return function($chunks) use ($crypt, $chunk_size, $header) {
         $chunker = chunk_stream($chunk_size);
-        return iter\map(function($chunk) use ($crypt) {
+        $chunks = iter\map(function($chunk) use ($crypt, $header) {
             return $crypt->encrypt($chunk);
         }, $chunker($chunks));
+
+        if ($header) {
+            $chunks = add_chunk_header_stream($chunks);
+        }
+
+        return $chunks;
     };
+}
+
+function add_chunk_header_stream($chunks) {
+    foreach ($chunks as $chunk) {
+        $chunk_size = strlen($chunk); // size in bytes of string
+        yield pack('V', $chunk_size) . $chunk;
+    }
 }
 
 /** Decrypts a stream by chunk
@@ -303,11 +316,75 @@ function encrypt_stream(Crypt $crypt, $chunk_size) {
     @return \Closure yields decrypted chunks
 */
 function decrypt_stream(Crypt $crypt, $chunk_size, $padding = 32) {
-    $chunk_size += $padding;
-    return function($chunks) use ($crypt, $chunk_size) {
-        $chunker = chunk_stream($chunk_size);
-        return iter\map(function($chunk) use ($crypt) {
-            return $crypt->decrypt($chunk);
-        }, $chunker($chunks));
+    if ($chunk_size) {
+        $chunk_size += $padding;
+        return function($chunks) use ($crypt, $chunk_size) {
+            $chunker = chunk_stream($chunk_size);
+            return iter\map(function($chunk) use ($crypt) {
+                return $crypt->decrypt($chunk);
+            }, $chunker($chunks));
+        };
+    }
+
+    return function($chunks) use ($crypt) {
+        $chunks = header_chunk_stream($chunks);
+        foreach ($chunks as $chunk) {
+            yield $crypt->decrypt($chunk);
+        }
     };
+}
+
+function header_chunk_stream($chunks) {
+    $at_least_4 = function($chunks) {
+        $buf = null;
+        foreach ($chunks as $chunk) {
+            $buf = $buf ? ($buf . $chunk) : $chunk;
+            if (strlen($buf) >= 4) {
+                yield $buf;
+                $buf = null;
+            }
+        }
+
+        if ($buf) {
+            yield $buf;
+        }
+    };
+
+    $buf = '';
+    $size = null;
+    foreach ($at_least_4($chunks) as $chunk) {
+        $buf .= $chunk;
+        if ($size === null && strlen($buf) < 4) {
+            continue;
+        } else if ($size === null) {
+            list($size, $buf) = _unpack_header($buf);
+        }
+
+        if (strlen($buf) == $size) {
+            yield $buf;
+            $buf = null;
+            $size = null;
+        } else if (strlen($buf) < $size) {
+            // do nothing, just append the next chunk to current buf
+        } else /* strlen($buf) > $size */ {
+            while ($size !== null && strlen($buf) > $size) {
+                yield substr($buf, 0, $size);
+                $buf = substr($buf, $size);
+                $size = null;
+                if (strlen($buf) < 4) {
+                    continue;
+                }
+                list($size, $buf) = _unpack_header($buf);
+            }
+        }
+    }
+    if ($buf) {
+        throw new \RuntimeException("Invalid headers were found in the chunked data.");
+    }
+}
+
+function _unpack_header($chunk) {
+    $data = unpack('Vsize', $chunk);
+    $size = $data['size'];
+    return [$size, substr($chunk, 4)];
 }

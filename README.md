@@ -99,11 +99,14 @@ use Krak\Crypto;
 $stream = Crypto\str_stream('this is some data'); // create a stream from raw string.
 $stream = new Crypto\StreamPipe($stream);
 
+$crypt_stream = new Crypto\Stream\CryptStream(new Crypto\OpenSSLCrypt($key), 16); // encrypt/decrypt 16 byte chunks at a time
+$base64_stream = new Crypto\Stream\Base64Stream(64); // encode/decode 64 byte chunks at a time
+
 $key = random_bytes(16);
 $dst = fopen('php://stdout', 'w');
 $stream->pipe(Crypto\map_stream('strtoupper'))
-    ->pipe(Crypto\encrypt_stream(new Crypto\OpenSslCrypt($key), 16))
-    ->pipe(Crypto\base64_encode_stream(16))
+    ->pipe($crypt_stream->encrypt())
+    ->pipe($base64_stream->encode())
     ->pipe(Crypt\write_stream($dst));
 // at this point, stdout will have encrypted uppercased info.
 ```
