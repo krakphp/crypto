@@ -335,55 +335,30 @@ function decrypt_stream(Crypt $crypt, $chunk_size, $padding = 32) {
 }
 
 function header_chunk_stream($chunks) {
-    $at_least_4 = function($chunks) {
-        $buf = null;
-        foreach ($chunks as $chunk) {
-            $buf = $buf ? ($buf . $chunk) : $chunk;
-            if (strlen($buf) >= 4) {
-                yield $buf;
-                $buf = null;
-            }
-        }
-
-        if ($buf) {
-            yield $buf;
-        }
-    };
-
     $buf = '';
     $size = null;
-    foreach ($at_least_4($chunks) as $chunk) {
+    foreach ($chunks as $chunk) {
         $buf .= $chunk;
-        if ($size === null && strlen($buf) < 4) {
-            continue;
-        } else if ($size === null) {
+        if ($size === null) {
             list($size, $buf) = _unpack_header($buf);
         }
 
-        if (strlen($buf) == $size) {
-            yield $buf;
-            $buf = null;
-            $size = null;
-        } else if (strlen($buf) < $size) {
-            // do nothing, just append the next chunk to current buf
-        } else /* strlen($buf) > $size */ {
-            while ($size !== null && strlen($buf) > $size) {
-                yield substr($buf, 0, $size);
-                $buf = substr($buf, $size);
-                $size = null;
-                if (strlen($buf) < 4) {
-                    continue;
-                }
-                list($size, $buf) = _unpack_header($buf);
-            }
+        while ($size !== null && strlen($buf) >= $size) {
+            yield substr($buf, 0, $size);
+            $buf = substr($buf, $size);
+            list($size, $buf) = _unpack_header($buf);
         }
     }
+
     if ($buf) {
         throw new \RuntimeException("Invalid headers were found in the chunked data.");
     }
 }
 
 function _unpack_header($chunk) {
+    if (strlen($chunk) < 4) {
+        return [null, $chunk];
+    }
     $data = unpack('Vsize', $chunk);
     $size = $data['size'];
     return [$size, substr($chunk, 4)];

@@ -138,14 +138,21 @@ describe('Stream', function() {
     });
     describe('#header_chunk_stream', function() {
         it('properly chunks based off of headers', function() {
-            $chunks = Crypto\add_chunk_header_stream(['a', 'bb', 'ccc', 'dddd', 'eeeee']);
+            $chunks = Crypto\add_chunk_header_stream(['a', 'bb', 'ccc', 'dddd', 'eeee']);
             $str = Crypto\stream_to_str($chunks);
+
             $chunk_stream = Crypto\chunk_stream(4);
-            $chunks = [$str];
-            $chunks = $chunk_stream($chunks);
-            $chunks = Crypto\header_chunk_stream($chunks);
-            $chunks = iterator_to_array($chunks);
-            assert(implode('', $chunks) === 'abbcccddddeeeee');
+
+            $chunk_parts = [
+                [$str],
+                $chunk_stream([$str])
+            ];
+
+            foreach ($chunk_parts as $chunks) {
+                $chunks = Crypto\header_chunk_stream($chunks);
+                $chunks = iterator_to_array($chunks);
+                assert(implode('', $chunks) === 'abbcccddddeeee');
+            }
         });
         it('throws an exception if headers are invalid or not found.', function() {
             $chunks = Crypto\header_chunk_stream(['a', 'b']);
